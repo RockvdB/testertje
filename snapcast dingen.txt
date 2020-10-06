@@ -1,0 +1,210 @@
+volume:
+alsamixer + -
+
+---------output device status list -----------
+aplay -l
+------ speaker test --------------------------
+speaker-test -c2
+------ roze ruis test ------------------------
+sudo cat /dev/urandom > /tmp/snapfifo
+
+========= Audio ==============================
+--------- HifiBerry --------------------------
+Bestand: /boot/config.txt
+# Enable audio (loads snd_bcm2835)
+#dtparam=audio=on
+dtoverlay=hifiberry-dacplus
+
+# Enable audio (loads snd_bcm2835)
+# dtparam=audio=on
+dtoverlay=hifiberry-dac
+
+----- Audio voor hifiberry card default ------
+sudo nano /usr/share/alsa/alsa.conf
+
+defaults.ctl.card 0 >1
+defaults.pcm.card 0 >1
+
+------ Audio voor USB default ----------------
+pi@snapcastcl1:~ $ aplay -l
+**** List of PLAYBACK Hardware Devices ****
+card 0: Headphones [bcm2835 Headphones], device 0: bcm2835 Headphones [bcm2835 Headphones]
+  Subdevices: 8/8
+  Subdevice #0: subdevice #0
+  Subdevice #1: subdevice #1
+  Subdevice #2: subdevice #2
+  Subdevice #3: subdevice #3
+  Subdevice #4: subdevice #4
+  Subdevice #5: subdevice #5
+  Subdevice #6: subdevice #6
+  Subdevice #7: subdevice #7
+card 1: Device [USB Audio Device], device 0: USB Audio [USB Audio]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+pi@snapcastcl1:~ $ cat /proc/asound/modules
+ 0 snd_bcm2835
+ 1 snd_usb_audio
+pi@snapcastcl1:~ $ cat /proc/asound/cards
+ 0 [Headphones     ]: bcm2835_headphonbcm2835 Headphones - bcm2835 Headphones
+                      bcm2835 Headphones
+ 1 [Device         ]: USB-Audio - USB Audio Device
+                      GeneralPlus USB Audio Device at usb-20980000.usb-1.3, full speed
+pi@snapcastcl1:~ $ amixer -c 1
+Simple mixer control 'Speaker',0
+  Capabilities: pvolume pswitch pswitch-joined
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 30
+  Mono:
+  Front Left: Playback 28 [93%] [-3.00dB] [on]
+  Front Right: Playback 28 [93%] [-3.00dB] [on]
+Simple mixer control 'Mic',0
+  Capabilities: pvolume pvolume-joined cvolume cvolume-joined pswitch pswitch-joined cswitch cswitch-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: Playback 0 - 14 Capture 0 - 30
+  Mono: Playback 12 [86%] [6.00dB] [off] Capture 26 [87%] [27.00dB] [on]
+Simple mixer control 'Auto Gain Control',0
+  Capabilities: pswitch pswitch-joined
+  Playback channels: Mono
+  Mono: Playback [off]
+pi@snapcastcl1:~ $ amixer -c 0
+Simple mixer control 'Headphone',0
+  Capabilities: pvolume pvolume-joined pswitch pswitch-joined
+  Playback channels: Mono
+  Limits: Playback -10239 - 400
+  Mono: Playback -174 [95%] [-1.74dB] [on]
+
+alsamixer start op met goede card nummer "1" gezet in 1e stap alsa.conf
+ defaults naar card '1'
+ oplossing:
+ Bestand: /boot/config.txt
+ # Enable audio (loads snd_bcm2835) disable het dus!
+ dtparam=audio=off
+
+ ==========install Snapcast packages =========
+ wget https://github.com/badaix/snapcast/releases/download/v0.20.0/snapclient_0.20.0-1_armhf.deb
+ sudo dpkg -i snapclient_0.20.0-1_armhf.deb
+
+ wget https://github.com/badaix/snapcast/releases/download/v0.20.0/snapserver_0.20.0-1_armhf.deb
+ sudo dpkg -i snapserver_0.20.0-1_armhf.deb
+
+[bij ontbrekende depedencies]
+sudo apt-get -f install
+
+ -----------configuration snapserver ---------
+ Bestand: /etc/default/snapserver
+
+ # start snapserver automatically?
+ START_SNAPSERVER=true
+ USER_OPTS="--user snapserver:snapserver"
+ SNAPSERVER_OPTS="-s spotify:///librespot?name=Spotify&bitrate=320&enable-volume-normalisation -s airplay:///shairport-sync?name=Airplay"
+
+ sudo service snapserver status
+ ● snapserver.service - Snapcast server
+    Loaded: loaded (/lib/systemd/system/snapserver.service; enabled; vendor preset: enabled)
+    Active: active (running) since Fri 2019-06-28 19:14:32 CEST; 3 weeks 4 days ago
+   Process: 340 ExecStart=/usr/bin/snapserver -d $USER_OPTS $SNAPSERVER_OPTS (code=exited, status=0/S
+  Main PID: 357 (snapserver)
+    CGroup: /system.slice/snapserver.service
+            ├─357 /usr/bin/snapserver -d --user snapserver:snapserver -s spotify:///librespot?name=Sp
+            ├─399 sh -c cd '/usr/bin/' && /usr/bin/librespot --name "Snapcast" --bitrate 320 --backen
+            └─407 /usr/bin/librespot --name Snapcast --bitrate 320 --backend pipe
+
+ jun 28 19:14:32 SnapCastServer systemd[1]: Starting Snapcast server...
+ jun 28 19:14:32 SnapCastServer snapserver[340]: Settings file: "/var/lib/snapserver/server.json"
+ jun 28 19:14:32 SnapCastServer snapserver[340]: spotify:///librespot?name=Spotify&bitrate=320&enable
+ jun 28 19:14:32 SnapCastServer snapserver[340]: airplay:///shairport-sync?name=Airplay
+ jun 28 19:14:32 SnapCastServer snapserver[340]: 2019-06-28 19-14-32 [Notice] Settings file: "/var/li
+ jun 28 19:14:32 SnapCastServer snapserver[357]: daemon started
+ jun 28 19:14:32 SnapCastServer systemd[1]: Started Snapcast server.
+ jun 28 19:14:35 SnapCastServer snapserver[357]: StreamServer::NewConnection: fe80::c1df:7d5:bf45:c0d
+ jun 28 19:14:41 SnapCastServer snapserver[357]: StreamServer::NewConnection: ::ffff:10.11.1.144
+
+---------------------------
+File: /etc/default/snapclient
+# defaults file for snapclient
+# start snapclient automatically?
+START_SNAPCLIENT=true
+
+Op de snapserver
+sudo nano /etc/default/snapclient
+ START_SNAPCLIENT=true
+ SNAPCLIENT_OPTS="-s sndrpihifiberry"
+Op de snapclient
+ sudo nano /etc/default/snapclient
+ START_SNAPCLIENT=true
+ SNAPCLIENT_OPTS="--hostID ZwartePiet"
+
+
+========= Toevoegen audio Bronnen ============
+-------------- Spotify -----------------------
+
+curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
+
+That's it! Plug a speaker into your Pi on your local network, select the device in Spotify et voilà!
+Hard installation. Essentially, here's what the easy installer does,
+
+# Install curl and https apt transport
+sudo apt-get -y install curl apt-transport-https
+
+# Add repo and its GPG key
+curl -sSL https://dtcooper.github.io/raspotify/key.asc | sudo apt-key add -v -
+echo 'deb https://dtcooper.github.io/raspotify raspotify main' | sudo tee /etc/apt/sources.list.d/raspotify.list
+
+# Install package
+sudo apt-get update
+sudo apt-get -y install raspotify
+
+Or you can just download the latest .deb package and install it manually from here (raspotify-latest.deb),
+
+wget https://dtcooper.github.io/raspotify/raspotify-latest.deb
+sudo dpkg -i raspotify-latest.deb
+
+Bovenstaande lijkt niet naar "pipe" zijn output te sturen.
+
+
+-------------- Airplay -----------------------
+
+1. Before we get started let’s first run an update and upgrade on our Raspberry Pi to ensure we are running the latest software.
+
+sudo apt-get update
+sudo apt-get upgrade
+
+2. Once that has completed we need to install several different packages, run the following commands on your Raspberry Pi to install all of the packages that we need.
+
+sudo apt-get install autoconf libtool libdaemon-dev libasound2-dev libpopt-dev libconfig-dev
+sudo apt-get install avahi-daemon libavahi-client-dev
+sudo apt-get install libssl-dev
+
+3. We will now clone the shairport-sync source to our Raspberry Pi.
+Shairport-Sync is the best fork of the original Shairport code and allows syncing across multiple rooms.
+Run the following commands on your Raspberry Pi to download the source code to your Raspberry Pi.
+
+cd ~
+git clone https://github.com/mikebrady/shairport-sync.git
+
+4. Now that we have cloned the Shairport-Sync repository to our Raspberry Pi we can now build and install the Shairport software.
+Before we get started, we must first move into the shairport-sync folder and configure the system. To do this, we must run a few commands on our Raspberry Pi.
+
+cd shairport-sync
+autoreconf -i -f
+./configure --with-alsa --with-avahi --with-ssl=openssl --with-systemd --with-metadata
+
+The autoreconf command setups the basic config file. The configure command further sets up the build system, telling it to utilize the ALSA audio backend, the Avahi network and set it to use OpenSSL for encryption.
+
+5. With the configuration process now completed we can finally compile Shairport-sync and install it. We can run the two make commands below on our Raspberry Pi to compile and install Shairport-Sync to the device. This process will set up numerous things including the autostart script.
+
+make
+sudo make install
+
+6. To enable the Shairport Sync software to start automatically at system startup you need to enter the following command into the terminal on the Raspberry Pi.
+
+sudo systemctl enable shairport-sync
+
+7. Finally, we can start up the Shairport software immediately by running the command below on our Raspberry Pi.
+
+sudo service shairport-sync start
+==============================================
+check netwerk connection
+iwlist
+tail -f /var/log/syslog |grep -e snap

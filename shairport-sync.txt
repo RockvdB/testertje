@@ -1,0 +1,45 @@
+https://github.com/mikebrady/shairport-sync/blob/master/INSTALL.mdshairport-sync
+
+1).Voorbereiding
+# sudo apt-get update
+# sudo apt-get upgrade
+
+2).Remove Old Copies
+# which shairport-sync
+  >> path waar shairport-sync zich bevind
+
+# rm /usr/local/bin/shairport-sync
+# rm -d directory
+# rm -r recurive
+
+3).Build & install
+# sudo apt-get install build-essential git xmltoman autoconf automake libtool libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev
+
+# sudo git clone https://github.com/mikebrady/shairport-sync.git
+# cd shairport-sync
+# sudo autoreconf -fi
+# sudo ./configure --sysconfdir=/etc --with-alsa --with-soxr --with-avahi --with-ssl=openssl --with-systemd
+# sudo make
+# sudo make install
+
+4).configure Shairport Sync.
+Here are the important options for the Shairport Sync configuration file at /etc/shairport-sync.conf:
+
+          // Sample Configuration File for Shairport Sync on a Raspberry Pi using the built-in audio DAC
+          general =
+          {
+            volume_range_db = 60;
+          };
+
+          alsa =
+          {
+            output_device = "hw:0";
+            mixer_control_name = "PCM";
+          };
+
+The volume_range_db = 60; setting makes Shairport Sync use only the usable part of the built-in audio card mixer's attenuation range.
+
+5).automatically on boot up:
+# sudo systemctl enable shairport-sync
+Finally, either reboot the Pi or start the shairport-sync service:
+# sudo systemctl start shairport-sync
